@@ -1,0 +1,692 @@
+<!-- jinja: ignore -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Misión | Estación Espacial</title>
+    <style>
+        :root {
+            --space-dark: #020010;
+            --panel-bg: rgba(12, 18, 45, 0.92);
+            --panel-border: rgba(100, 140, 255, 0.2);
+            --accent: #7c8aff;
+            --accent-glow: rgba(120, 140, 255, 0.3);
+            --text-primary: #e0e0f0;
+            --text-secondary: #9090b0;
+            --success: #4ade80;
+            --success-bg: rgba(74, 222, 128, 0.08);
+            --success-border: rgba(74, 222, 128, 0.25);
+            --danger: #f87171;
+            --danger-bg: rgba(248, 113, 113, 0.08);
+            --danger-border: rgba(248, 113, 113, 0.25);
+            --warning: #fbbf24;
+            --warning-bg: rgba(251, 191, 36, 0.08);
+            --comet-cyan: #00e5ff;
+            --star-yellow: #ffd740;
+            --card-bg: rgba(18, 24, 55, 0.7);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--space-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 25px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Fondo espacial */
+        .space-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle var(--duration) infinite ease-in-out;
+            animation-delay: var(--delay);
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: var(--min-opacity); transform: scale(1); }
+            50% { opacity: 1; transform: scale(2.2); }
+        }
+
+        .nebula {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.06;
+        }
+
+        .nebula-1 {
+            width: 450px; height: 320px;
+            background: #6b3fa0;
+            top: -5%; right: -8%;
+            animation: nebulaDrift 15s infinite ease-in-out;
+        }
+
+        .nebula-2 {
+            width: 400px; height: 280px;
+            background: #1a5fb4;
+            bottom: -8%; left: -8%;
+            animation: nebulaDrift 18s infinite ease-in-out reverse;
+        }
+
+        @keyframes nebulaDrift {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -20px) scale(1.06); }
+            66% { transform: translate(-20px, 15px) scale(0.94); }
+        }
+
+        /* Contenedor */
+        .container {
+            position: relative;
+            z-index: 1;
+            background: var(--panel-bg);
+            padding: 35px 30px;
+            border-radius: 20px;
+            width: 680px;
+            max-width: 100%;
+            border: 1px solid var(--panel-border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 
+                0 25px 70px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.02);
+            animation: containerEntry 0.6s ease-out;
+        }
+
+        @keyframes containerEntry {
+            from { opacity: 0; transform: translateY(30px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Encabezado */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 6px;
+        }
+
+        .header-icon {
+            font-size: 2.5rem;
+            animation: iconFloat 3s infinite ease-in-out;
+        }
+
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .header-text h1 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            background: linear-gradient(180deg, #f0f0ff 0%, #c0d0ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-text .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(120, 140, 255, 0.5), 
+                rgba(200, 210, 255, 0.6), 
+                rgba(120, 140, 255, 0.5), 
+                transparent);
+            margin: 18px 0 22px;
+        }
+
+        /* Tarjeta de puntuación */
+        .score-card {
+            background: var(--card-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 22px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .score-card::before {
+            content: '';
+            position: absolute;
+            top: -30%; left: -30%;
+            width: 160%; height: 160%;
+            background: radial-gradient(ellipse at center, 
+                rgba(120, 140, 255, 0.06) 0%, 
+                transparent 70%);
+            animation: scoreGlow 4s infinite ease-in-out;
+        }
+
+        @keyframes scoreGlow {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .score-tripulante {
+            position: relative;
+            z-index: 1;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .score-tripulante .astronaut-icon {
+            font-size: 1.3rem;
+        }
+
+        .score-valor {
+            position: relative;
+            z-index: 1;
+            font-size: 4rem;
+            font-weight: 800;
+            background: linear-gradient(180deg, #f0f0ff 0%, #b0c8ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            animation: scorePop 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        @keyframes scorePop {
+            0% { transform: scale(0.3); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .score-outof {
+            position: relative;
+            z-index: 1;
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .score-badge {
+            display: inline-block;
+            padding: 5px 18px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-top: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .badge-excelente {
+            background: rgba(74, 222, 128, 0.12);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            color: #4ade80;
+            animation: badgeGlow 2s infinite;
+        }
+
+        .badge-bueno {
+            background: rgba(251, 191, 36, 0.12);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            color: #fbbf24;
+        }
+
+        .badge-regular {
+            background: rgba(248, 113, 113, 0.12);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            color: #f87171;
+        }
+
+        @keyframes badgeGlow {
+            0%, 100% { box-shadow: 0 0 10px rgba(74, 222, 128, 0.2); }
+            50% { box-shadow: 0 0 20px rgba(74, 222, 128, 0.4); }
+        }
+
+        /* Secciones */
+        .section {
+            margin-bottom: 18px;
+            animation: sectionSlide 0.5s ease-out forwards;
+            opacity: 0;
+        }
+
+        .section:nth-child(1) { animation-delay: 0.1s; }
+        .section:nth-child(2) { animation-delay: 0.2s; }
+        .section:nth-child(3) { animation-delay: 0.3s; }
+        .section:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes sectionSlide {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .section-title .section-icon {
+            font-size: 1.1rem;
+        }
+
+        /* Criterios */
+        .criterio {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            margin-bottom: 6px;
+            font-size: 0.88rem;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .criterio.ok {
+            border-left: 3px solid var(--success);
+            border-color: rgba(74, 222, 128, 0.2);
+        }
+
+        .criterio.ok:hover {
+            border-color: rgba(74, 222, 128, 0.4);
+            background: rgba(74, 222, 128, 0.05);
+        }
+
+        .criterio.fail {
+            border-left: 3px solid var(--danger);
+            border-color: rgba(248, 113, 113, 0.2);
+        }
+
+        .criterio.fail:hover {
+            border-color: rgba(248, 113, 113, 0.4);
+            background: rgba(248, 113, 113, 0.05);
+        }
+
+        .criterio-icon {
+            font-size: 1.2rem;
+            width: 28px;
+            text-align: center;
+        }
+
+        /* Plagio */
+        .plagio-card {
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .plagio-ok {
+            background: var(--success-bg);
+            border: 1px solid var(--success-border);
+            color: #6ee7a8;
+        }
+
+        .plagio-alert {
+            background: var(--danger-bg);
+            border: 1px solid var(--danger-border);
+            color: #fca5a5;
+            animation: alertShake 0.5s ease;
+        }
+
+        @keyframes alertShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        .plagio-icon {
+            font-size: 1.5rem;
+        }
+
+        /* Feedback */
+        .feedback-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(120, 140, 255, 0.15);
+            border-radius: 12px;
+            padding: 16px 18px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #c8c8e0;
+            position: relative;
+        }
+
+        .feedback-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, 
+                rgba(120, 140, 255, 0.03) 0%, 
+                transparent 50%);
+            border-radius: 12px;
+            pointer-events: none;
+        }
+
+        /* Botones */
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #6b5ce7 0%, #5a4bd1 100%);
+            border: 1px solid rgba(120, 140, 255, 0.3);
+            border-radius: 12px;
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, 
+                rgba(255, 255, 255, 0.1) 0%, 
+                transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #7c6af7 0%, #6a58e0 100%);
+            border-color: rgba(140, 160, 255, 0.5);
+            box-shadow: 
+                0 10px 30px rgba(100, 80, 220, 0.35),
+                0 0 50px rgba(120, 140, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .btn:hover::before { opacity: 1; }
+
+        .btn-secondary {
+            background: rgba(120, 140, 255, 0.06);
+            border: 1px solid rgba(120, 140, 255, 0.2);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(120, 140, 255, 0.12);
+            border-color: rgba(120, 140, 255, 0.35);
+            color: #c0d0ff;
+            box-shadow: 0 8px 25px rgba(80, 100, 200, 0.2);
+        }
+
+        .btn-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 500px) {
+            .container { padding: 22px 15px; }
+            .score-valor { font-size: 3rem; }
+            .header-text h1 { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Fondo espacial -->
+    <div class="space-bg" id="spaceBg">
+        <div class="nebula nebula-1"></div>
+        <div class="nebula nebula-2"></div>
+    </div>
+
+    <!-- Contenedor -->
+    <div class="container">
+        
+        <!-- Encabezado -->
+        <div class="header">
+            <span class="header-icon">📡</span>
+            <div class="header-text">
+                <h1>Reporte de Misión</h1>
+                <p class="subtitle">🌌 Resultados del análisis de tripulación</p>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Puntuación -->
+        <div class="score-card">
+            <div class="score-tripulante">
+                <span class="astronaut-icon">👨‍🚀</span>
+                <span id="nombreTripulante"></span>
+            </div>
+            <div class="score-valor" id="notaValor"></div>
+            <div class="score-outof">de 10.00 puntos estelares</div>
+            
+            <span class="score-badge" id="scoreBadge"></span>
+        </div>
+
+        <!-- Criterios -->
+        <div class="section">
+            <div class="section-title">
+                <span class="section-icon">⚙️</span> Sistemas Evaluados
+            </div>
+            <div id="criteriosContainer"></div>
+        </div>
+
+        <!-- Plagio -->
+        <div class="section">
+            <div class="section-title">
+                <span class="section-icon">🛡️</span> Escaneo de Integridad
+            </div>
+            <div id="plagioCard" class="plagio-card"></div>
+        </div>
+
+        <!-- Análisis -->
+        <div class="section">
+            <div class="section-title">
+                <span class="section-icon">🔍</span> Análisis de la Misión
+            </div>
+            <div class="feedback-card" id="analisisTexto"></div>
+        </div>
+
+        <!-- Retroalimentación -->
+        <div class="section">
+            <div class="section-title">
+                <span class="section-icon">💬</span> Comunicado al Tripulante
+            </div>
+            <div class="feedback-card" id="retroTexto"></div>
+        </div>
+
+        <!-- Botones -->
+        <div class="btn-group">
+            <a href="/evaluar" class="btn">
+                <span class="btn-content">
+                    <span>📝 Iniciar Nueva Misión</span>
+                    <span>🚀</span>
+                </span>
+            </a>
+            <a href="/" class="btn btn-secondary">
+                <span class="btn-content">
+                    <span>◄ Regresar a la Estación Principal</span>
+                </span>
+            </a>
+        </div>
+
+    </div>
+
+    <!-- DATOS DESDE FLASK (sin errores de linter) -->
+    <script type="application/json" id="flaskData">
+        {
+            "nombre": "{{ nombre }}",
+            "nota": "{{ nota }}",
+            "criterios": [
+                {% for c in criterios %}
+                {
+                    "grupo": "{{ c.grupo }}",
+                    "cumplido": {{ 'true' if c.cumplido else 'false' }}
+                }{{ ',' if not loop.last else '' }}
+                {% endfor %}
+            ],
+            "plagio": "{{ plagio }}",
+            "analisis": "{{ analisis }}",
+            "retroalimentacion": "{{ retroalimentacion }}"
+        }
+    </script>
+
+    <script>
+        // Leer datos desde el JSON embebido
+        const data = JSON.parse(document.getElementById('flaskData').innerHTML);
+        
+        // Llenar nombre
+        document.getElementById('nombreTripulante').textContent = data.nombre;
+        
+        // Llenar nota
+        const notaValor = parseFloat(data.nota);
+        document.getElementById('notaValor').textContent = data.nota;
+        
+        // Badge según nota
+        const badge = document.getElementById('scoreBadge');
+        if (notaValor >= 8) {
+            badge.className = 'score-badge badge-excelente';
+            badge.textContent = '🌟 DESEMPEÑO ESTELAR';
+        } else if (notaValor >= 6) {
+            badge.className = 'score-badge badge-bueno';
+            badge.textContent = '🛰️ MISIÓN ACEPTABLE';
+        } else if (notaValor >= 4) {
+            badge.className = 'score-badge badge-regular';
+            badge.textContent = '🔧 REQUIERE REVISIÓN';
+        } else {
+            badge.className = 'score-badge badge-regular';
+            badge.textContent = '⚠️ MISIÓN FALLIDA';
+        }
+        
+        // Llenar criterios
+        const criteriosContainer = document.getElementById('criteriosContainer');
+        data.criterios.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'criterio ' + (c.cumplido ? 'ok' : 'fail');
+            div.innerHTML = `
+                <span class="criterio-icon">${c.cumplido ? '✅' : '❌'}</span>
+                <span>${c.grupo}</span>
+            `;
+            criteriosContainer.appendChild(div);
+        });
+        
+        // Llenar plagio
+        const plagioCard = document.getElementById('plagioCard');
+        if (data.plagio === 'Ninguno') {
+            plagioCard.className = 'plagio-card plagio-ok';
+            plagioCard.innerHTML = `
+                <span class="plagio-icon">🛡️</span>
+                <span>Integridad confirmada — Sin anomalías detectadas</span>
+            `;
+        } else {
+            plagioCard.className = 'plagio-card plagio-alert';
+            plagioCard.innerHTML = `
+                <span class="plagio-icon">⚠️</span>
+                <span>${data.plagio}</span>
+            `;
+        }
+        
+        // Llenar análisis y retroalimentación
+        document.getElementById('analisisTexto').textContent = data.analisis;
+        document.getElementById('retroTexto').textContent = data.retroalimentacion;
+        
+        // Crear estrellas de fondo
+        const spaceBg = document.getElementById('spaceBg');
+        for (let i = 0; i < 90; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            const size = Math.random() * 2 + 0.5;
+            star.style.cssText = `
+                width: ${size}px;
+                height: ${size}px;
+                left: ${Math.random() * 100}%;
+                top: ${Math.random() * 100}%;
+                --duration: ${Math.random() * 3 + 2}s;
+                --delay: ${Math.random() * 4}s;
+                --min-opacity: ${Math.random() * 0.3 + 0.06};
+            `;
+            spaceBg.appendChild(star);
+        }
+        
+        // Confeti para notas altas
+        if (notaValor >= 8) {
+            const confettiStyle = document.createElement('style');
+            confettiStyle.textContent = `
+                @keyframes confettiFall {
+                    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+                    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(confettiStyle);
+            
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.style.cssText = `
+                        position: fixed;
+                        z-index: 100;
+                        pointer-events: none;
+                        font-size: ${Math.random() * 20 + 15}px;
+                        left: ${Math.random() * 80 + 10}%;
+                        top: -30px;
+                        animation: confettiFall ${Math.random() * 2 + 2}s linear forwards;
+                    `;
+                    confetti.textContent = ['⭐', '🌟', '✨', '💫', '🎉'][Math.floor(Math.random() * 5)];
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 4000);
+                }, i * 80);
+            }
+        }
+    </script>
+
+</body>
+</html>

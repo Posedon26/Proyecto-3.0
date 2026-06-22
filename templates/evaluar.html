@@ -1,0 +1,501 @@
+<!-- jinja: ignore -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluar Misión | Estación Espacial</title>
+    <style>
+        :root {
+            --space-dark: #020010;
+            --panel-bg: rgba(12, 18, 45, 0.92);
+            --panel-border: rgba(100, 140, 255, 0.2);
+            --accent: #7c8aff;
+            --input-bg: rgba(15, 20, 50, 0.8);
+            --input-border: rgba(100, 140, 255, 0.15);
+            --input-focus: rgba(120, 160, 255, 0.5);
+            --text-primary: #e0e0f0;
+            --text-secondary: #9090b0;
+            --danger: #f87171;
+            --danger-bg: rgba(248, 113, 113, 0.1);
+            --comet-cyan: #00e5ff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--space-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        /* Fondo espacial */
+        .space-bg {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; z-index: 0; pointer-events: none;
+        }
+
+        .star {
+            position: absolute; background: white; border-radius: 50%;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+
+        /* Orbe de energía */
+        .energy-orb {
+            position: fixed;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            transition: all 0.3s ease;
+            filter: blur(15px);
+            opacity: 0.6;
+        }
+
+        .nebula {
+            position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.07;
+        }
+
+        .nebula-1 {
+            width: 400px; height: 300px; background: #6b3fa0;
+            top: -5%; right: -10%; animation: nebulaDrift 14s infinite ease-in-out;
+        }
+
+        .nebula-2 {
+            width: 350px; height: 280px; background: #1a5fb4;
+            bottom: -8%; left: -8%; animation: nebulaDrift 17s infinite ease-in-out reverse;
+        }
+
+        @keyframes nebulaDrift {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -20px) scale(1.06); }
+            66% { transform: translate(-20px, 15px) scale(0.94); }
+        }
+
+        /* Overlay láser */
+        .laser-overlay {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .laser-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .laser-line {
+            width: 0%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #00e5ff, #7c8aff, #00e5ff, transparent);
+            box-shadow: 0 0 20px #00e5ff, 0 0 40px #7c8aff;
+            transition: width 1.5s ease;
+            border-radius: 2px;
+        }
+
+        .laser-overlay.active .laser-line {
+            width: 80%;
+        }
+
+        .laser-text {
+            color: #7c8aff;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 25px;
+            letter-spacing: 3px;
+            opacity: 0;
+            transition: opacity 0.5s ease 1s;
+            text-shadow: 0 0 20px rgba(120, 140, 255, 0.6);
+        }
+
+        .laser-overlay.active .laser-text {
+            opacity: 1;
+        }
+
+        /* Contenedor */
+        .container {
+            position: relative; z-index: 1;
+            background: var(--panel-bg);
+            padding: 40px 35px;
+            border-radius: 20px;
+            width: 620px; max-width: 100%;
+            border: 1px solid var(--panel-border);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+            animation: containerEntry 0.6s ease-out;
+        }
+
+        @keyframes containerEntry {
+            from { opacity: 0; transform: translateY(30px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .header { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+
+        .header-icon {
+            font-size: 2.4rem;
+            animation: iconFloat 3s infinite ease-in-out;
+        }
+
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-6px) rotate(5deg); }
+        }
+
+        .header-text h1 {
+            font-size: 1.7rem; font-weight: 700;
+            background: linear-gradient(180deg, #f0f0ff 0%, #c0d0ff 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .header-text .subtitle {
+            color: var(--text-secondary); font-size: 0.8rem;
+            letter-spacing: 1.2px; text-transform: uppercase;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(120, 140, 255, 0.5), rgba(200, 210, 255, 0.6), rgba(120, 140, 255, 0.5), transparent);
+            margin: 20px 0 25px;
+        }
+
+        .alert {
+            background: var(--danger-bg);
+            border: 1px solid rgba(248, 113, 113, 0.35);
+            color: #fca5a5;
+            padding: 12px 16px; border-radius: 10px;
+            margin-bottom: 22px; font-size: 0.88rem;
+            display: flex; align-items: center; gap: 10px;
+            animation: alertShake 0.5s ease;
+        }
+
+        .alert::before { content: '⚠️'; font-size: 1.2rem; }
+
+        @keyframes alertShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .form-group { margin-bottom: 20px; position: relative; }
+
+        label {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 8px; color: var(--text-secondary);
+            font-size: 0.85rem; font-weight: 500;
+            letter-spacing: 0.5px; text-transform: uppercase;
+        }
+
+        label .label-icon { font-size: 1.1rem; }
+
+        input, select, textarea {
+            width: 100%; padding: 13px 16px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 10px; color: var(--text-primary);
+            font-size: 0.95rem; font-family: 'Segoe UI', system-ui, sans-serif;
+            transition: all 0.3s ease; outline: none;
+        }
+
+        textarea { height: 160px; resize: vertical; line-height: 1.5; }
+
+        input:hover, select:hover, textarea:hover {
+            border-color: rgba(120, 140, 255, 0.3);
+            background: rgba(20, 28, 60, 0.8);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--input-focus);
+            background: rgba(20, 30, 65, 0.9);
+            box-shadow: 0 0 20px rgba(120, 140, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        }
+
+        select {
+            cursor: pointer; appearance: none; -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%239090b0' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 16px center;
+            padding-right: 40px;
+        }
+
+        select option { background: #0f1430; color: var(--text-primary); }
+
+        textarea::placeholder, input::placeholder { color: #555; }
+
+        /* Botón */
+        .btn {
+            width: 100%; padding: 15px;
+            background: linear-gradient(135deg, #6b5ce7 0%, #5a4bd1 100%);
+            border: 1px solid rgba(120, 140, 255, 0.3);
+            border-radius: 12px; color: white;
+            font-size: 1rem; font-weight: 600; cursor: pointer;
+            transition: all 0.3s ease; letter-spacing: 1px;
+            position: relative; overflow: hidden;
+        }
+
+        .btn::before {
+            content: ''; position: absolute; top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #7c6af7 0%, #6a58e0 100%);
+            border-color: rgba(140, 160, 255, 0.5);
+            box-shadow: 0 10px 30px rgba(100, 80, 220, 0.35), 0 0 50px rgba(120, 140, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .btn:hover::before { opacity: 1; }
+
+        .btn-content { display: flex; align-items: center; justify-content: center; gap: 10px; position: relative; z-index: 1; }
+
+        .back {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            margin-top: 18px; color: var(--text-secondary);
+            text-decoration: none; font-size: 0.85rem;
+            transition: all 0.3s ease; padding: 8px; border-radius: 8px;
+        }
+
+        .back:hover { color: #c0d0ff; background: rgba(120, 140, 255, 0.05); }
+
+        .char-count { text-align: right; font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; }
+
+        @media (max-width: 500px) {
+            .container { padding: 25px 18px; }
+            .header-text h1 { font-size: 1.3rem; }
+            .header-icon { font-size: 1.8rem; }
+            input, select, textarea { padding: 10px 14px; font-size: 0.88rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Fondo espacial -->
+    <div class="space-bg" id="spaceBg">
+        <div class="nebula nebula-1"></div>
+        <div class="nebula nebula-2"></div>
+    </div>
+
+    <!-- Orbe de energía -->
+    <div class="energy-orb" id="energyOrb"></div>
+
+    <!-- Overlay láser -->
+    <div class="laser-overlay" id="laserOverlay">
+        <div class="laser-line"></div>
+        <div class="laser-text">⚡ ESCANEANDO RESPUESTA...</div>
+    </div>
+
+    <!-- Contenedor -->
+    <div class="container">
+        
+        <div class="header">
+            <span class="header-icon">📝</span>
+            <div class="header-text">
+                <h1>Iniciar Evaluación</h1>
+                <p class="subtitle">🌠 Análisis de misión académica</p>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for msg in messages %}
+                    <div class="alert">{{ msg }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form action="/evaluar" method="POST" id="evalForm">
+            
+            <div class="form-group">
+                <label><span class="label-icon">👨‍🚀</span> Nombre del Tripulante</label>
+                <input type="text" name="nombre" id="nombre" placeholder="" required autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label><span class="label-icon">🎯</span> Seleccionar Misión</label>
+                <select name="pregunta" required>
+                    <option value="" disabled selected>— Seleccione una pregunta —</option>
+                    {% for id_p, info in preguntas.items() %}
+                        <option value="{{ id_p }}">[Misión {{ id_p }}] {{ info.pregunta }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label><span class="label-icon">💬</span> Respuesta del Tripulante</label>
+                <textarea name="respuesta" id="respuesta" placeholder="" required maxlength="5000"></textarea>
+                <div class="char-count"><span id="charCount">0</span> / 5000 caracteres</div>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">
+                <span class="btn-content">
+                    <span>Iniciar Evaluación</span>
+                    <span class="btn-icon">🚀</span>
+                </span>
+            </button>
+        </form>
+
+        <a href="/" class="back"><span>◄</span> Regresar a la Estación Principal</a>
+    </div>
+
+    <script>
+        // ============================================================
+        // EFECTO MÁQUINA DE ESCRIBIR EN PLACEHOLDERS
+        // ============================================================
+        const placeholderTexts = {
+            nombre: "Ingrese el nombre completo del estudiante...",
+            respuesta: "Escriba la respuesta del examen aquí... Redacte con claridad, incluya conceptos clave y desarrolle sus ideas de forma ordenada. Recuerde que la IA evaluará precisión, contenido y coherencia."
+        };
+
+        function typeWriter(input, text, speed = 40) {
+            let i = 0;
+            input.placeholder = '';
+            function type() {
+                if (i < text.length) {
+                    input.placeholder += text.charAt(i);
+                    i++;
+                    setTimeout(type, speed);
+                }
+            }
+            type();
+        }
+
+        const nombreInput = document.getElementById('nombre');
+        const respuestaTextarea = document.getElementById('respuesta');
+        
+        typeWriter(nombreInput, placeholderTexts.nombre, 35);
+        setTimeout(() => typeWriter(respuestaTextarea, placeholderTexts.respuesta, 20), 1500);
+
+        // ============================================================
+        // ESTRELLAS QUE SIGUEN AL MOUSE
+        // ============================================================
+        const spaceBg = document.getElementById('spaceBg');
+        const stars = [];
+        const starCount = 100;
+        
+        for (let i = 0; i < starCount; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            const size = Math.random() * 2 + 0.5;
+            const x = Math.random() * 100;
+            const y = Math.random() * 100;
+            star.style.cssText = `
+                width: ${size}px; height: ${size}px;
+                left: ${x}%; top: ${y}%;
+                opacity: ${Math.random() * 0.6 + 0.2};
+            `;
+            star.dataset.originalX = x;
+            star.dataset.originalY = y;
+            stars.push(star);
+            spaceBg.appendChild(star);
+        }
+
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        function animateStars() {
+            stars.forEach(star => {
+                const ox = parseFloat(star.dataset.originalX);
+                const oy = parseFloat(star.dataset.originalY);
+                const dx = (mouseX / window.innerWidth * 100 - ox) * 0.03;
+                const dy = (mouseY / window.innerHeight * 100 - oy) * 0.03;
+                star.style.transform = `translate(${dx}%, ${dy}%)`;
+                star.style.boxShadow = `0 0 ${Math.abs(dx) * 2}px rgba(180, 200, 255, 0.4)`;
+            });
+            requestAnimationFrame(animateStars);
+        }
+        animateStars();
+
+        // ============================================================
+        // ORBE DE ENERGÍA QUE CAMBIA DE COLOR
+        // ============================================================
+        const orb = document.getElementById('energyOrb');
+        
+        document.addEventListener('mousemove', (e) => {
+            orb.style.left = (e.clientX - 30) + 'px';
+            orb.style.top = (e.clientY - 30) + 'px';
+        });
+
+        respuestaTextarea.addEventListener('input', () => {
+            const len = respuestaTextarea.value.length;
+            let color, glowColor;
+            
+            if (len === 0) {
+                color = 'rgba(120, 138, 255, 0.3)';
+                glowColor = 'rgba(120, 138, 255, 0.4)';
+            } else if (len < 100) {
+                color = 'rgba(74, 222, 128, 0.5)';
+                glowColor = 'rgba(74, 222, 128, 0.6)';
+            } else if (len < 500) {
+                color = 'rgba(0, 229, 255, 0.6)';
+                glowColor = 'rgba(0, 229, 255, 0.7)';
+            } else if (len < 1500) {
+                color = 'rgba(251, 191, 36, 0.7)';
+                glowColor = 'rgba(251, 191, 36, 0.8)';
+            } else {
+                color = 'rgba(192, 132, 252, 0.8)';
+                glowColor = 'rgba(192, 132, 252, 0.9)';
+            }
+            
+            orb.style.background = `radial-gradient(circle, ${color}, transparent 70%)`;
+            orb.style.boxShadow = `0 0 40px ${glowColor}, 0 0 80px ${glowColor}`;
+            orb.style.width = (60 + len / 50) + 'px';
+            orb.style.height = (60 + len / 50) + 'px';
+        });
+
+        // ============================================================
+        // RAYO LÁSER AL ENVIAR
+        // ============================================================
+        const form = document.getElementById('evalForm');
+        const laserOverlay = document.getElementById('laserOverlay');
+        
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Activar overlay láser
+            laserOverlay.classList.add('active');
+            
+            // Después del láser, enviar formulario
+            setTimeout(() => {
+                laserOverlay.classList.remove('active');
+                form.submit();
+            }, 2200);
+        });
+
+        // ============================================================
+        // CONTADOR DE CARACTERES
+        // ============================================================
+        const charCount = document.getElementById('charCount');
+        respuestaTextarea.addEventListener('input', () => {
+            const count = respuestaTextarea.value.length;
+            charCount.textContent = count;
+            charCount.style.color = count > 4500 ? '#f87171' : count > 4000 ? '#fbbf24' : '#9090b0';
+        });
+    </script>
+
+</body>
+</html>

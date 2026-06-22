@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Misión | Estación Espacial</title>
+    <style>
+        :root {
+            --space-dark: #020010;
+            --space-blue: #0a0a2e;
+            --panel-bg: rgba(10, 15, 40, 0.9);
+            --panel-border: rgba(100, 140, 255, 0.2);
+            --accent: #7c8aff;
+            --accent-glow: rgba(120, 140, 255, 0.4);
+            --text-primary: #e0e0f0;
+            --text-secondary: #9090b0;
+            --success: #4ade80;
+            --success-glow: rgba(74, 222, 128, 0.3);
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --danger-glow: rgba(248, 113, 113, 0.3);
+            --comet-cyan: #00e5ff;
+            --star-yellow: #ffd740;
+            --table-header: rgba(30, 35, 70, 0.9);
+            --table-row: rgba(20, 25, 55, 0.7);
+            --table-hover: rgba(40, 50, 90, 0.8);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--space-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 30px 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Fondo espacial */
+        .space-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle var(--duration) infinite ease-in-out;
+            animation-delay: var(--delay);
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: var(--min-opacity); transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.8); }
+        }
+
+        .nebula {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.08;
+        }
+
+        .nebula-1 {
+            width: 500px; height: 350px;
+            background: #6b3fa0;
+            top: -10%; left: -15%;
+            animation: nebulaDrift 15s infinite ease-in-out;
+        }
+
+        .nebula-2 {
+            width: 450px; height: 300px;
+            background: #c44d8f;
+            bottom: -10%; right: -10%;
+            animation: nebulaDrift 18s infinite ease-in-out reverse;
+        }
+
+        @keyframes nebulaDrift {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(40px, -25px) scale(1.08); }
+            66% { transform: translate(-25px, 20px) scale(0.93); }
+        }
+
+        .white-dwarf {
+            position: fixed;
+            top: 3%;
+            right: 8%;
+            width: 70px;
+            height: 70px;
+            background: radial-gradient(circle, 
+                rgba(255,255,255,1) 0%, 
+                rgba(240,240,255,0.8) 20%, 
+                rgba(180,200,255,0.3) 50%, 
+                transparent 100%);
+            border-radius: 50%;
+            box-shadow: 
+                0 0 30px 10px rgba(200,210,255,0.4),
+                0 0 80px 30px rgba(150,170,255,0.2);
+            animation: dwarfPulse 4s infinite ease-in-out;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        @keyframes dwarfPulse {
+            0%, 100% { 
+                box-shadow: 0 0 30px 10px rgba(200,210,255,0.4), 0 0 80px 30px rgba(150,170,255,0.2); 
+            }
+            50% { 
+                box-shadow: 0 0 45px 18px rgba(220,230,255,0.6), 0 0 110px 45px rgba(170,190,255,0.35); 
+            }
+        }
+
+        /* Contenedor principal */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            padding: 35px 30px;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            box-shadow: 
+                0 25px 70px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.02);
+        }
+
+        /* Encabezado */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .header-icon {
+            font-size: 2.5rem;
+            animation: float 4s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .header-text h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            background: linear-gradient(180deg, #f0f0ff 0%, #c0d0ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 0.5px;
+        }
+
+        .header-text .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        /* Línea divisoria */
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(120, 140, 255, 0.5), 
+                rgba(200, 210, 255, 0.7), 
+                rgba(120, 140, 255, 0.5), 
+                transparent);
+            margin: 20px 0 25px;
+        }
+
+        /* Tabla */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 14px;
+            border: 1px solid rgba(100, 140, 255, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
+
+        thead {
+            background: var(--table-header);
+        }
+
+        th {
+            padding: 16px 18px;
+            text-align: left;
+            color: var(--accent);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            border-bottom: 2px solid rgba(120, 140, 255, 0.3);
+            position: sticky;
+            top: 0;
+        }
+
+        th .th-icon {
+            margin-right: 6px;
+        }
+
+        td {
+            padding: 14px 18px;
+            border-bottom: 1px solid rgba(100, 140, 255, 0.06);
+            font-size: 0.9rem;
+            color: #c8c8e0;
+            transition: all 0.2s ease;
+        }
+
+        tbody tr {
+            background: var(--table-row);
+            transition: all 0.3s ease;
+        }
+
+        tbody tr:hover td {
+            background: var(--table-hover);
+            color: #f0f0ff;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ID de registro */
+        .id-cell {
+            color: var(--comet-cyan);
+            font-weight: 600;
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        /* Nombre estudiante */
+        .student-name {
+            font-weight: 500;
+            color: #d0d8ff;
+        }
+
+        /* Pregunta */
+        .question-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(120, 140, 255, 0.12);
+            border: 1px solid rgba(120, 140, 255, 0.25);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #b0c0ff;
+            font-weight: 500;
+        }
+
+        /* Notas */
+        .nota-badge {
+            display: inline-block;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        .nota-alta {
+            background: rgba(74, 222, 128, 0.12);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            color: #4ade80;
+            text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+        }
+
+        .nota-media {
+            background: rgba(251, 191, 36, 0.12);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            color: #fbbf24;
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+        }
+
+        .nota-baja {
+            background: rgba(248, 113, 113, 0.12);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            color: #f87171;
+            text-shadow: 0 0 10px rgba(248, 113, 113, 0.3);
+        }
+
+        /* Plagio */
+        .plagio-ok {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #4ade80;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .plagio-ok::before {
+            content: '🛡️';
+            font-size: 0.9rem;
+        }
+
+        .plagio-alert {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #f87171;
+            font-size: 0.8rem;
+            font-weight: 500;
+            animation: alertPulse 1s infinite;
+        }
+
+        .plagio-alert::before {
+            content: '⚠️';
+            font-size: 0.9rem;
+        }
+
+        @keyframes alertPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Fecha */
+        .date-cell {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        /* Estado vacío */
+        .empty-state {
+            text-align: center;
+            padding: 60px 30px;
+        }
+
+        .empty-icon {
+            font-size: 5rem;
+            animation: float 3s infinite ease-in-out;
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        .empty-title {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .empty-desc {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* Footer de tabla */
+        .table-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 18px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .total-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            background: rgba(120, 140, 255, 0.08);
+            border: 1px solid rgba(120, 140, 255, 0.2);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .total-badge span {
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--success);
+            animation: dotGlow 2s infinite;
+        }
+
+        @keyframes dotGlow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Botón volver */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 25px;
+            padding: 10px 20px;
+            background: rgba(120, 140, 255, 0.08);
+            border: 1px solid rgba(120, 140, 255, 0.2);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(120, 140, 255, 0.15);
+            border-color: rgba(120, 140, 255, 0.4);
+            color: #d0d8ff;
+            box-shadow: 0 5px 20px rgba(80, 100, 200, 0.2);
+            transform: translateX(-3px);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 20px 15px; }
+            .header-icon { font-size: 1.8rem; }
+            .header-text h1 { font-size: 1.4rem; }
+            th, td { padding: 10px 12px; font-size: 0.78rem; }
+            .white-dwarf { width: 40px; height: 40px; }
+        }
+
+        /* Scrollbar espacial */
+        ::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(20, 25, 55, 0.5);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(120, 140, 255, 0.3);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(120, 140, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Fondo espacial -->
+    <div class="space-bg" id="spaceBg">
+        <div class="nebula nebula-1"></div>
+        <div class="nebula nebula-2"></div>
+        <div class="white-dwarf"></div>
+    </div>
+
+    <!-- Contenido -->
+    <div class="container">
+        
+        <!-- Encabezado -->
+        <div class="header">
+            <span class="header-icon">🌌</span>
+            <div class="header-text">
+                <h1>Registro de Misión</h1>
+                <p class="subtitle">📡 Bitácora de evaluaciones — Estación Espacial</p>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        {% if registros %}
+        <!-- Tabla -->
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th><span class="th-icon">🆔</span> ID</th>
+                        <th><span class="th-icon">👨‍🚀</span> Tripulante</th>
+                        <th><span class="th-icon">🎯</span> Misión</th>
+                        <th><span class="th-icon">📊</span> Puntuación</th>
+                        <th><span class="th-icon">🛡️</span> Integridad</th>
+                        <th><span class="th-icon">📅</span> Fecha Estelar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in registros %}
+                    <tr>
+                        <td class="id-cell">#{{ r[0] }}</td>
+                        <td class="student-name">{{ r[1] }}</td>
+                        <td><span class="question-badge">Pregunta {{ r[2] }}</span></td>
+                        <td>
+                            {% set nota = r[3] %}
+                            {% if nota and nota != 'N/A' %}
+                                {% set valor = nota.split('/')[0].strip() | float %}
+                                <span class="nota-badge {{ 'nota-alta' if valor >= 7 else ('nota-media' if valor >= 5 else 'nota-baja') }}">
+                                    {{ nota }}
+                                </span>
+                            {% else %}
+                                <span class="nota-badge nota-baja">{{ nota }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if r[4] == 'Ninguno' or r[4] == '✅ Ninguno' %}
+                                <span class="plagio-ok">Limpio</span>
+                            {% else %}
+                                <span class="plagio-alert">{{ r[4][:30] }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="date-cell">{{ r[5] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="table-footer">
+            <div class="total-badge">
+                <span class="status-dot"></span>
+                Total de misiones registradas: <span>{{ registros|length }}</span>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Estado vacío -->
+        <div class="empty-state">
+            <span class="empty-icon">🛰️</span>
+            <p class="empty-title">Sin registros de misión</p>
+            <p class="empty-desc">Aún no se han realizado evaluaciones en esta estación</p>
+        </div>
+        {% endif %}
+
+        <!-- Botón volver -->
+        <a href="/" class="back-btn">
+            <span>◄</span> Volver a la Estación Principal
+        </a>
+
+    </div>
+
+    <script>
+        // Crear estrellas
+        const spaceBg = document.getElementById('spaceBg');
+        const starCount = 120;
+        
+        for (let i = 0; i < starCount; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            
+            const size = Math.random() * 2.2 + 0.6;
+            const x = Math.random() * 100;
+            const y = Math.random() * 100;
+            const duration = Math.random() * 3 + 2;
+            const delay = Math.random() * 4;
+            const minOpacity = Math.random() * 0.35 + 0.08;
+            
+            star.style.cssText = `
+                width: ${size}px;
+                height: ${size}px;
+                left: ${x}%;
+                top: ${y}%;
+                --duration: ${duration}s;
+                --delay: ${delay}s;
+                --min-opacity: ${minOpacity};
+            `;
+            
+            spaceBg.appendChild(star);
+        }
+
+        // Efecto de escaneo en filas al cargar
+        document.addEventListener('DOMContentLoaded', () => {
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach((row, index) => {
+                row.style.opacity = '0';
+                row.style.transform = 'translateY(10px)';
+                row.style.transition = 'all 0.4s ease';
+                
+                setTimeout(() => {
+                    row.style.opacity = '1';
+                    row.style.transform = 'translateY(0)';
+                }, index * 60);
+            });
+        });
+    </script>
+
+</body>
+</html>
