@@ -65,8 +65,8 @@ Sistema que evalúa respuestas abiertas de estudiantes (preguntas de desarrollo,
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/tu-usuario/evaluaciones-respuesta-abierta.git
-cd evaluaciones-respuesta-abierta
+git clone https://github.com/Posedon26/Proyecto-3.0.git
+cd Proyecto-3.0
 ```
 
 ### 2. Crear entorno virtual e instalar dependencias
