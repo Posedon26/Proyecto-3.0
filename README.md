@@ -304,7 +304,7 @@ difflib (stdlib)
 
 ---
 
-## 👨‍💻 Autor
+## 👨‍💻 Autor : Grupo 4
 
 Proyecto desarrollado para el curso de Inteligencia Artificial.  
 Estación Espacial Evaluadora v3.0 — 42 libros | 27,525 palabras | 64 épocas
